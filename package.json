@@ -1,0 +1,41 @@
+{
+  "name": "restspace",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/restspace.js",
+  "bin": {
+    "restspace": "./dist/restspace.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "nodemon --watch *.ts --exec ts-node restspace.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && npm install -g .",
+    "bundle": "rollup -c",
+    "install": "npm install -g ."
+  },
+  "author": "DESKTOP-PTLE0C3\\james",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-replace": "^3.0.0",
+    "@rollup/plugin-typescript": "^8.2.5",
+    "@types/inquirer": "^7.3.3",
+    "@types/node": "^16.7.10",
+    "@types/node-fetch": "^2.5.12",
+    "nodemon": "^2.0.12",
+    "ts-node": "^10.2.0",
+    "typescript": "^4.0.5"
+  },
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^20.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "commander": "^8.1.0",
+    "inquirer": "^8.1.2",
+    "node-fetch": "^2.6.1",
+    "rollup": "^2.56.3",
+    "terser": "^5.7.2"
+  }
+}
