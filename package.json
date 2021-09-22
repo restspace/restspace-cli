@@ -11,10 +11,9 @@
   ],
   "scripts": {
     "start": "nodemon --watch *.ts --exec ts-node restspace.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && npm install -g .",
-    "bundle": "rollup -c",
-    "install": "npm install -g ."
+    "test": "jest",
+    "build": "tsc",
+    "bundle": "rollup -c && npm install -g ."
   },
   "author": "DESKTOP-PTLE0C3\\james",
   "license": "ISC",
@@ -29,13 +28,17 @@
     "typescript": "^4.0.5"
   },
   "dependencies": {
+    "@restspace/url-data": "^0.1.1",
     "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
+    "@types/mocha": "^9.0.0",
     "commander": "^8.1.0",
-    "inquirer": "^8.1.2",
+    "inquirer": "^8.1.5",
+    "mocha": "^9.1.1",
     "node-fetch": "^2.6.1",
     "rollup": "^2.56.3",
-    "terser": "^5.7.2"
+    "terser": "^5.7.2",
+    "ts-eager": "^2.0.2"
   }
 }

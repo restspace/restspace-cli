@@ -22,9 +22,30 @@ var fs$3 = require('fs/promises');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
+function _interopNamespace(e) {
+	if (e && e.__esModule) return e;
+	var n = Object.create(null);
+	if (e) {
+		Object.keys(e).forEach(function (k) {
+			if (k !== 'default') {
+				var d = Object.getOwnPropertyDescriptor(e, k);
+				Object.defineProperty(n, k, d.get ? d : {
+					enumerable: true,
+					get: function () {
+						return e[k];
+					}
+				});
+			}
+		});
+	}
+	n['default'] = e;
+	return Object.freeze(n);
+}
+
 var require$$0__default = /*#__PURE__*/_interopDefaultLegacy(require$$0$2);
 var require$$1__default = /*#__PURE__*/_interopDefaultLegacy(require$$1$2);
 var path__default = /*#__PURE__*/_interopDefaultLegacy(path$2);
+var path__namespace = /*#__PURE__*/_interopNamespace(path$2);
 var require$$0__default$1 = /*#__PURE__*/_interopDefaultLegacy(require$$0$3);
 var Stream__default = /*#__PURE__*/_interopDefaultLegacy(Stream$1);
 var http__default = /*#__PURE__*/_interopDefaultLegacy(http);
@@ -2778,6 +2799,16 @@ function __values$1(o) {
         }
     };
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
+function __spreadArray$1(to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 }
 
 function __await$1(v) {
@@ -10976,6 +11007,40 @@ function clone$2(value) {
 
 var clone_1 = clone$2;
 
+var baseGet$1 = _baseGet;
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get$1(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet$1(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+var get_1 = get$1;
+
 var assignValue$1 = _assignValue,
     castPath$1 = _castPath,
     isIndex$1 = _isIndex,
@@ -16265,6 +16330,7 @@ const _$a = {
   isPlainObject: isPlainObject_1,
   clone: clone_1,
   isArray: isArray_1,
+  get: get_1,
   set: set_1,
   isFunction: isFunction_1,
 };
@@ -16380,7 +16446,10 @@ class PromptUI extends Base$8 {
   }
 
   filterIfRunnable(question) {
-    if (question.askAnswered !== true && this.answers[question.name] !== undefined) {
+    if (
+      question.askAnswered !== true &&
+      _$a.get(this.answers, question.name) !== undefined
+    ) {
       return empty();
     }
 
@@ -17167,40 +17236,6 @@ function baseMatches$1(source) {
 }
 
 var _baseMatches = baseMatches$1;
-
-var baseGet$1 = _baseGet;
-
-/**
- * Gets the value at `path` of `object`. If the resolved value is
- * `undefined`, the `defaultValue` is returned in its place.
- *
- * @static
- * @memberOf _
- * @since 3.7.0
- * @category Object
- * @param {Object} object The object to query.
- * @param {Array|string} path The path of the property to get.
- * @param {*} [defaultValue] The value returned for `undefined` resolved values.
- * @returns {*} Returns the resolved value.
- * @example
- *
- * var object = { 'a': [{ 'b': { 'c': 3 } }] };
- *
- * _.get(object, 'a[0].b.c');
- * // => 3
- *
- * _.get(object, ['a', '0', 'b', 'c']);
- * // => 3
- *
- * _.get(object, 'a.b.c', 'default');
- * // => 'default'
- */
-function get$1(object, path, defaultValue) {
-  var result = object == null ? undefined : baseGet$1(object, path);
-  return result === undefined ? defaultValue : result;
-}
-
-var get_1 = get$1;
 
 /**
  * The base implementation of `_.hasIn` without support for deep paths.
@@ -23031,6 +23066,7 @@ class Prompt {
   }
 
   startSpinner(value, bottomContent) {
+    value = this.getSpinningValue(value);
     // If the question will spin, cut off the prefix (for layout purposes)
     const content = bottomContent
       ? this.getQuestion() + value
@@ -23040,13 +23076,22 @@ class Prompt {
   }
 
   /**
+   * Allow override, e.g. for password prompts
+   * See: https://github.com/SBoudrias/Inquirer.js/issues/1022
+   *
+   * @return {String} value to display while spinning
+   */
+  getSpinningValue(value) {
+    return value;
+  }
+
+  /**
    * Generate the prompt question string
    * @return {String} prompt question string
    */
   getQuestion() {
     let message =
-      this.opt.prefix +
-      ' ' +
+      (this.opt.prefix ? this.opt.prefix + ' ' : '') +
       chalk$9.bold(this.opt.message) +
       this.opt.suffix +
       chalk$9.reset(' ');
@@ -23882,6 +23927,7 @@ class RawListPrompt extends Base$4 {
     if (index == null) {
       index = this.rawDefault;
     } else if (index === '') {
+      this.selected = this.selected === undefined ? -1 : this.selected;
       index = this.selected;
     } else {
       index -= 1;
@@ -24838,13 +24884,9 @@ class PasswordPrompt extends Base$1 {
     let bottomContent = '';
 
     if (this.status === 'answered') {
-      message += this.opt.mask
-        ? chalk$1.cyan(mask(this.answer, this.opt.mask))
-        : chalk$1.italic.dim('[hidden]');
-    } else if (this.opt.mask) {
-      message += mask(this.rl.line || '', this.opt.mask);
+      message += this.getMaskedValue(this.answer);
     } else {
-      message += chalk$1.italic.dim('[input is hidden] ');
+      message += this.getMaskedValue(this.rl.line || '');
     }
 
     if (error) {
@@ -24852,6 +24894,24 @@ class PasswordPrompt extends Base$1 {
     }
 
     this.screen.render(message, bottomContent);
+  }
+
+  getMaskedValue(value) {
+    if (this.status === 'answered') {
+      return this.opt.mask
+        ? chalk$1.cyan(mask(value, this.opt.mask))
+        : chalk$1.italic.dim('[hidden]');
+    }
+    return this.opt.mask
+      ? mask(value, this.opt.mask)
+      : chalk$1.italic.dim('[input is hidden] ');
+  }
+
+  /**
+   * Mask value during async filter/validation.
+   */
+  getSpinningValue(value) {
+    return this.getMaskedValue(value);
   }
 
   /**
@@ -39132,13 +39192,16 @@ var fetchCreds = function (host) { return __awaiter$1(void 0, void 0, void 0, fu
 }); };
 
 var login = function (hostArg) { return __awaiter$1(void 0, void 0, void 0, function () {
-    var _a, creds, base, res, cookie, token;
+    var _a, creds, base, res, err_1, cookie, token;
     var _b;
     return __generator$1(this, function (_c) {
         switch (_c.label) {
             case 0: return [4 /*yield*/, fetchCreds(hostArg)];
             case 1:
                 _a = _c.sent(), creds = _a[1], base = _a[2];
+                _c.label = 2;
+            case 2:
+                _c.trys.push([2, 4, , 5]);
                 return [4 /*yield*/, fetch(base + 'auth/login', {
                         method: 'POST',
                         body: JSON.stringify({
@@ -39149,8 +39212,15 @@ var login = function (hostArg) { return __awaiter$1(void 0, void 0, void 0, func
                             'Content-Type': 'application/json'
                         }
                     })];
-            case 2:
+            case 3:
                 res = _c.sent();
+                return [3 /*break*/, 5];
+            case 4:
+                err_1 = _c.sent();
+                console.error("Login to instance failed: " + err_1);
+                process$2.exit(1);
+                return [3 /*break*/, 5];
+            case 5:
                 if (!res.ok) {
                     switch (res.status) {
                         case 404:
@@ -39177,38 +39247,465 @@ var login = function (hostArg) { return __awaiter$1(void 0, void 0, void 0, func
     });
 }); };
 
-var sendAction = function () { return __awaiter$1(void 0, void 0, void 0, function () {
-    var absDirPath, servicesStr, services, base, token, putChords;
+var applicationRoot = function () { return __awaiter$1(void 0, void 0, void 0, function () {
+    return __generator$1(this, function (_a) {
+        return [2 /*return*/, process.cwd()];
+    });
+}); };
+var canRead = function (filePath) { return __awaiter$1(void 0, void 0, void 0, function () {
+    return __generator$1(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, fs__default['default'].access(filePath, require$$0__default$1['default'].constants.R_OK)
+                    .then(function () { return true; })
+                    .catch(function () { return false; })];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); };
+var publicRoot = function () { return __awaiter$1(void 0, void 0, void 0, function () {
+    var appRoot, reactStdPublicIndex;
+    return __generator$1(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, applicationRoot()];
+            case 1:
+                appRoot = _a.sent();
+                reactStdPublicIndex = path__default['default'].resolve(appRoot, "public", "index.html");
+                return [4 /*yield*/, canRead(reactStdPublicIndex)];
+            case 2:
+                if (_a.sent()) {
+                    return [2 /*return*/, path__default['default'].resolve(appRoot, 'public')];
+                }
+                return [2 /*return*/, ''];
+        }
+    });
+}); };
+
+function slashTrim(s) {
+    var start = 0;
+    var end = s.length;
+    if (s[start] === '/')
+        start++;
+    if (s[end - 1] === '/')
+        end--;
+    if (end <= start)
+        return '';
+    return s.substring(start, end);
+}
+var ScanState;
+(function (ScanState) {
+    ScanState[ScanState["Scanning"] = 0] = "Scanning";
+    ScanState[ScanState["Initial"] = 1] = "Initial";
+    ScanState[ScanState["PathPosition"] = 2] = "PathPosition";
+    ScanState[ScanState["PathPosition2"] = 3] = "PathPosition2";
+    ScanState[ScanState["DotPosition"] = 4] = "DotPosition";
+    ScanState[ScanState["Default"] = 5] = "Default";
+    ScanState[ScanState["DonePathPosition"] = 6] = "DonePathPosition";
+    ScanState[ScanState["UntilRBracketDefault"] = 7] = "UntilRBracketDefault";
+    ScanState[ScanState["Fail"] = 8] = "Fail";
+})(ScanState || (ScanState = {}));
+var getParts = function (path) { return slashTrim(path || '').split('/').filter(function (part) { return part !== ''; }); };
+var pullInteger = function (pos, s) {
+    var val = 0;
+    while (pos < s.length && s[pos] >= '0' && s[pos] <= '9') {
+        val = val * 10 + parseInt(s[pos]);
+        pos++;
+    }
+    pos--;
+    return [pos, val];
+};
+var getSegments = function (part, ch0, ch1, n0, n1) {
+    var pos0 = ch0 === '>' ? n0 : part.length - n0 - 1;
+    var pos1 = ch1 == '' ? pos0 + 1
+        : ch1 === '>' ? n1 + 1 : part.length - n1; // +1 as slice is exclusive of final pos
+    return part.slice(pos0, pos1);
+};
+var dotSplit = function (segment, spec) {
+    var pos0, pos1;
+    var dotParts = segment.split('.');
+    switch (spec) {
+        case '?.':
+            pos0 = 0;
+            pos1 = 1;
+            break;
+        case '*.':
+            pos0 = 0;
+            pos1 = dotParts.length - 1;
+            break;
+        case '.?':
+            pos0 = dotParts.length - 1;
+            pos1 = dotParts.length;
+            break;
+        case '.*':
+            pos0 = 1;
+            pos1 = dotParts.length;
+            break;
+    }
+    return dotParts.slice(pos0, pos1).join('.');
+};
+function resolvePathPattern(pathPattern, sources) {
+    var pos = 0;
+    var state = ScanState.Scanning;
+    var output = [];
+    var part = [];
+    var marker0 = '';
+    var markerPos0 = -1;
+    var partialOutput = [];
+    var bracketedVal = [];
+    var ignoreMode = false;
+    while (pos < pathPattern.length) {
+        var ch = pathPattern[pos];
+        switch (state) {
+            case ScanState.Scanning:
+                if (ch === '$') {
+                    state = ScanState.Initial;
+                    part = [];
+                    marker0 = '';
+                    markerPos0 = -1;
+                    if (partialOutput.length)
+                        ignoreMode = true;
+                    bracketedVal = [];
+                }
+                else {
+                    output.push(ch);
+                }
+                break;
+            case ScanState.Initial:
+                state = ScanState.PathPosition;
+                part =
+                    ch === 'B' ? getParts(sources.basePath)
+                        : ch === 'S' ? getParts(sources.subPath)
+                            : ch === 'P' ? getParts(sources.basePath).concat(getParts(sources.currentPath))
+                                : getParts(sources.currentPath);
+                if (!"BSP".includes(ch))
+                    pos--;
+                break;
+            case ScanState.PathPosition:
+                if (ch === '*') {
+                    if (!ignoreMode)
+                        partialOutput = __spreadArray$1([], part);
+                    state = ScanState.DotPosition;
+                }
+                else if (ch === '<' || ch === '>') {
+                    pos++;
+                    var _a = pullInteger(pos, pathPattern), newPos = _a[0], newMarkerPos0 = _a[1];
+                    if (newPos === pos - 1) {
+                        state = ScanState.Fail;
+                        break;
+                    }
+                    pos = newPos;
+                    marker0 = ch;
+                    markerPos0 = newMarkerPos0;
+                    state = ScanState.PathPosition2;
+                }
+                break;
+            case ScanState.PathPosition2:
+                var marker1 = '';
+                var markerPos1 = 0;
+                if (ch === '<' || ch === '>') {
+                    pos++;
+                    var _b = pullInteger(pos, pathPattern), newPos = _b[0], newMarkerPos1 = _b[1];
+                    if (newPos === pos - 1) {
+                        state = ScanState.Fail;
+                        break;
+                    }
+                    pos = newPos;
+                    marker1 = ch;
+                    markerPos1 = newMarkerPos1;
+                }
+                else {
+                    pos--;
+                }
+                if (!ignoreMode)
+                    partialOutput = getSegments(part, marker0, marker1, markerPos0, markerPos1);
+                state = ScanState.DotPosition;
+                break;
+            case ScanState.DotPosition:
+                if (ch === '|') {
+                    pos++;
+                    var front = pathPattern.substr(pos, 3);
+                    if (front === '?.|' || front === '*.|' || front === '.?|' || front === '.*|') {
+                        if (!ignoreMode) {
+                            partialOutput[partialOutput.length - 1] =
+                                dotSplit(partialOutput[partialOutput.length - 1] || '', front.substr(0, 2));
+                        }
+                        pos += 2;
+                        state = ScanState.Default;
+                    }
+                    else {
+                        state = ScanState.DonePathPosition;
+                        pos--;
+                    }
+                }
+                else {
+                    state = ScanState.Default;
+                    pos--;
+                }
+                break;
+            case ScanState.Default:
+                if (ch === ':') {
+                    if (pathPattern.length > pos + 1 && pathPattern[pos + 1] === '(') {
+                        pos++;
+                        state = ScanState.UntilRBracketDefault;
+                    }
+                    else if (pathPattern.length > pos + 1 && pathPattern[pos + 1] === '$') {
+                        state = ScanState.Scanning;
+                    }
+                }
+                else {
+                    state = ScanState.DonePathPosition;
+                    pos--;
+                }
+                break;
+            case ScanState.UntilRBracketDefault:
+                if (ch === ')') {
+                    if (partialOutput.length === 0)
+                        partialOutput = [bracketedVal.join('')];
+                    state = ScanState.DonePathPosition;
+                }
+                else {
+                    bracketedVal.push(ch);
+                }
+                break;
+            case ScanState.DonePathPosition:
+                output = output.concat(partialOutput.join('/'));
+                state = ScanState.Scanning;
+                ignoreMode = false;
+                partialOutput = [];
+                pos--;
+                break;
+        }
+        if (state !== ScanState.Fail)
+            pos++;
+    }
+    switch (state) {
+        case ScanState.PathPosition2:
+            if (!ignoreMode)
+                partialOutput = getSegments(part, marker0, '', markerPos0, 0);
+            output = output.concat(partialOutput.join('/'));
+            break;
+        case ScanState.DotPosition:
+        case ScanState.Default:
+        case ScanState.DonePathPosition:
+            output = output.concat(partialOutput.join('/'));
+            break;
+    }
+    return output.join('');
+}
+
+var execPromise = function (cmd) { return __awaiter$1(void 0, void 0, void 0, function () {
+    return __generator$1(this, function (_a) {
+        return [2 /*return*/, new Promise(function (resolve, reject) { return require$$1$2.exec(cmd, function (error, stdout, stderr) {
+                if (error) {
+                    reject(error);
+                }
+                else if (stderr) {
+                    reject(stderr);
+                }
+                else {
+                    resolve(stdout);
+                }
+            }); })];
+    });
+}); };
+var applyTransforms = function (filename, localDirPath, allFilenames, extensions) { return __awaiter$1(void 0, void 0, void 0, function () {
+    var schemaFilename_1, filePath, schemaAll, err_1, typename_1, schema, schemaStr, schemaPath;
     return __generator$1(this, function (_a) {
         switch (_a.label) {
             case 0:
-                absDirPath = process.cwd();
-                return [4 /*yield*/, fs__default['default'].readFile(path__default['default'].join(absDirPath, "services.json"))];
+                if (!(filename.endsWith('.ts') && extensions.includes('.schema.json'))) return [3 /*break*/, 7];
+                schemaFilename_1 = filename.replace('.ts', '.schema.json');
+                if (!allFilenames.some(function (fn) { return fn === schemaFilename_1; })) return [3 /*break*/, 1];
+                console.log("Not converting " + filename + " as " + schemaFilename_1 + " already exists");
+                return [2 /*return*/, '']; // no new file to send
             case 1:
-                servicesStr = _a.sent();
-                services = JSON.parse(servicesStr.toString());
-                base = services.base;
-                return [4 /*yield*/, login(base)];
+                filePath = path__namespace.join(localDirPath, filename);
+                console.log("converting " + filePath + " to " + schemaFilename_1);
+                schemaAll = void 0;
+                _a.label = 2;
             case 2:
-                token = (_a.sent())[0];
+                _a.trys.push([2, 4, , 5]);
+                return [4 /*yield*/, execPromise("typescript-json-schema " + filePath + " *")];
+            case 3:
+                schemaAll = (_a.sent());
+                return [3 /*break*/, 5];
+            case 4:
+                err_1 = _a.sent();
+                console.error("Failed to translate " + filePath + " to JSON schema: " + err_1);
+                return [2 /*return*/, ''];
+            case 5:
+                typename_1 = filename.split('.')[0].toLowerCase();
+                schema = Object.entries(JSON.parse(schemaAll).definitions).find(function (_a) {
+                    var k = _a[0]; _a[1];
+                    return k.toLowerCase() === typename_1;
+                });
+                if (!schema) {
+                    console.log("Couldn't find type named " + typename_1);
+                    return [2 /*return*/, ''];
+                }
+                schemaStr = JSON.stringify(schema);
+                console.log('SCHEMA: ' + JSON.stringify(schemaAll));
+                schemaPath = path__namespace.join(localDirPath, schemaFilename_1);
+                return [4 /*yield*/, fs__default['default'].writeFile(schemaPath, schemaStr)];
+            case 6:
+                _a.sent();
+                return [2 /*return*/, schemaFilename_1];
+            case 7: return [2 /*return*/, filename];
+        }
+    });
+}); };
+
+var syncLocalDir = function (absDirPath, urlBase, newService, headers) { return __awaiter$1(void 0, void 0, void 0, function () {
+    var localDirPath, remoteUrl, resp, remoteList, extensions, localList, _i, localList_1, localFile, transformedFilename, remoteServicePath, remoteUrlPath, localFilePath, fileStr, err_1, remoteItemIdx, _a, remoteList_1, removeRemoteUrl, message, canDelete, err_2;
+    return __generator$1(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                if (!newService.localDir)
+                    return [2 /*return*/];
+                localDirPath = path__default['default'].join.apply(path__default['default'], __spreadArray$1([absDirPath, 'serviceFiles'], newService.localDir.path.split('/')));
+                remoteUrl = "" + urlBase + newService.basePath.substr(1);
+                return [4 /*yield*/, fetch(remoteUrl + '/?$list=recursive,all,nodirs')];
+            case 1:
+                resp = _b.sent();
+                return [4 /*yield*/, resp.json()];
+            case 2:
+                remoteList = (_b.sent());
+                extensions = newService.localDir.extensions || [];
+                remoteList = remoteList.filter(function (name) { return extensions.length ? extensions.some(function (ext) { return name.endsWith(ext); }) : true; });
+                return [4 /*yield*/, fs__default['default'].readdir(localDirPath)];
+            case 3:
+                localList = _b.sent();
+                _i = 0, localList_1 = localList;
+                _b.label = 4;
+            case 4:
+                if (!(_i < localList_1.length)) return [3 /*break*/, 12];
+                localFile = localList_1[_i];
+                return [4 /*yield*/, applyTransforms(localFile, localDirPath, localList, extensions)];
+            case 5:
+                transformedFilename = _b.sent();
+                if (transformedFilename === '')
+                    return [3 /*break*/, 11];
+                remoteServicePath = transformedFilename.toLowerCase();
+                remoteUrlPath = remoteUrl + "/" + remoteServicePath;
+                _b.label = 6;
+            case 6:
+                _b.trys.push([6, 9, , 10]);
+                if (newService.localDir.pathUrlMap) {
+                    remoteServicePath = resolvePathPattern(newService.localDir.pathUrlMap, { currentPath: transformedFilename.toLowerCase() });
+                    remoteUrlPath = remoteUrl + "/" + remoteServicePath;
+                }
+                localFilePath = path__default['default'].join(localDirPath, transformedFilename);
+                return [4 /*yield*/, fs__default['default'].readFile(localFilePath)];
+            case 7:
+                fileStr = _b.sent();
+                console.log("Sending " + localFilePath + " to remote url: " + remoteUrlPath);
+                return [4 /*yield*/, fetch(remoteUrlPath, {
+                        method: 'PUT',
+                        headers: headers,
+                        body: fileStr
+                    })];
+            case 8:
+                resp = _b.sent();
+                if (!resp.ok)
+                    throw new Error("HTTP send to " + remoteUrlPath + " failed: " + resp.status + " " + resp.statusText);
+                return [3 /*break*/, 10];
+            case 9:
+                err_1 = _b.sent();
+                console.error("Failed to send file " + remoteUrlPath + ": " + err_1);
+                return [3 /*break*/, 10];
+            case 10:
+                remoteItemIdx = remoteList.indexOf(remoteServicePath);
+                remoteList.splice(remoteItemIdx, 1);
+                _b.label = 11;
+            case 11:
+                _i++;
+                return [3 /*break*/, 4];
+            case 12:
+                _a = 0, remoteList_1 = remoteList;
+                _b.label = 13;
+            case 13:
+                if (!(_a < remoteList_1.length)) return [3 /*break*/, 19];
+                removeRemoteUrl = remoteList_1[_a];
+                message = "Confirm deletion of remote file at " + removeRemoteUrl;
+                return [4 /*yield*/, inquirer
+                        .prompt({ type: "confirm", name: "canDelete", message: message })];
+            case 14:
+                canDelete = (_b.sent()).canDelete;
+                if (!canDelete) return [3 /*break*/, 18];
+                _b.label = 15;
+            case 15:
+                _b.trys.push([15, 17, , 18]);
+                return [4 /*yield*/, fetch(remoteUrl + "/" + removeRemoteUrl, {
+                        method: 'DELETE',
+                        headers: headers
+                    })];
+            case 16:
+                resp = _b.sent();
+                return [3 /*break*/, 18];
+            case 17:
+                err_2 = _b.sent();
+                console.error("Failed to delete: " + err_2);
+                return [3 /*break*/, 18];
+            case 18:
+                _a++;
+                return [3 /*break*/, 13];
+            case 19: return [2 /*return*/];
+        }
+    });
+}); };
+var sendAction = function () { return __awaiter$1(void 0, void 0, void 0, function () {
+    var absDirPath, servicesStr, services, _a, token, base, headers, chords, putChords, _i, _b, chord, _c, _d, newService;
+    return __generator$1(this, function (_e) {
+        switch (_e.label) {
+            case 0: return [4 /*yield*/, applicationRoot()];
+            case 1:
+                absDirPath = _e.sent();
+                return [4 /*yield*/, fs__default['default'].readFile(path__default['default'].join(absDirPath, "services.json"))];
+            case 2:
+                servicesStr = _e.sent();
+                services = JSON.parse(servicesStr.toString());
+                return [4 /*yield*/, login()];
+            case 3:
+                _a = _e.sent(), token = _a[0], base = _a[1];
                 console.log(services);
+                headers = {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                };
+                chords = services.chords;
                 return [4 /*yield*/, fetch(base + '.well-known/restspace/chords', {
                         method: 'PUT',
-                        headers: {
-                            'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
-                        },
+                        headers: headers,
                         body: JSON.stringify(services.chords)
                     })];
-            case 3:
-                putChords = _a.sent();
+            case 4:
+                putChords = _e.sent();
                 if (!putChords.ok) {
                     console.error("Failed to send, result was " + putChords.status + " " + putChords.statusText);
                 }
                 else {
                     console.log("Sent services to " + base);
                 }
-                return [2 /*return*/];
+                _i = 0, _b = Object.values(chords);
+                _e.label = 5;
+            case 5:
+                if (!(_i < _b.length)) return [3 /*break*/, 10];
+                chord = _b[_i];
+                _c = 0, _d = chord.newServices || [];
+                _e.label = 6;
+            case 6:
+                if (!(_c < _d.length)) return [3 /*break*/, 9];
+                newService = _d[_c];
+                return [4 /*yield*/, syncLocalDir(absDirPath, base, newService, headers)];
+            case 7:
+                _e.sent();
+                _e.label = 8;
+            case 8:
+                _c++;
+                return [3 /*break*/, 6];
+            case 9:
+                _i++;
+                return [3 /*break*/, 5];
+            case 10: return [2 /*return*/];
         }
     });
 }); };
@@ -39326,77 +39823,124 @@ function scanDir(absPath, mode) {
     });
 }
 var generateAction = function (dirPath) { return __awaiter$1(void 0, void 0, void 0, function () {
-    var absDirPath, absPath, chords, _a, _b, chordFile, chord, chordBuf, chordStr, err_1, e_3_1, _c, base, services;
-    var e_3, _d;
-    return __generator$1(this, function (_e) {
-        switch (_e.label) {
+    var absDirPath, _a, _b, absPath, chords, _c, _d, chordFile, chord, chordBuf, chordStr, err_1, _i, _e, serviceConfig, localDirPath, e_3_1, _f, base, publicRootPath, restspaceJson, restspaceJsonPath, services, servicesJsonPath;
+    var e_3, _g;
+    return __generator$1(this, function (_h) {
+        switch (_h.label) {
             case 0:
                 if (!dirPath)
                     dirPath = ".";
-                absDirPath = path__default['default'].resolve(process.cwd(), dirPath);
+                _b = (_a = path__default['default']).resolve;
+                return [4 /*yield*/, applicationRoot()];
+            case 1:
+                absDirPath = _b.apply(_a, [_h.sent(), dirPath]);
                 absPath = path__default['default'].resolve(absDirPath, "./node_modules");
                 console.log("Scanning " + absPath + "...");
                 chords = {};
-                _e.label = 1;
-            case 1:
-                _e.trys.push([1, 10, 11, 16]);
-                _a = __asyncValues$1(scanDir(absPath, "node_modules"));
-                _e.label = 2;
-            case 2: return [4 /*yield*/, _a.next()];
-            case 3:
-                if (!(_b = _e.sent(), !_b.done)) return [3 /*break*/, 9];
-                chordFile = _b.value;
+                _h.label = 2;
+            case 2:
+                _h.trys.push([2, 18, 19, 24]);
+                _c = __asyncValues$1(scanDir(absPath, "node_modules"));
+                _h.label = 3;
+            case 3: return [4 /*yield*/, _c.next()];
+            case 4:
+                if (!(_d = _h.sent(), !_d.done)) return [3 /*break*/, 17];
+                chordFile = _d.value;
                 console.log("Found " + chordFile);
                 chord = { id: 'none' };
-                _e.label = 4;
-            case 4:
-                _e.trys.push([4, 6, , 7]);
-                return [4 /*yield*/, fs__default['default'].readFile(chordFile)];
+                _h.label = 5;
             case 5:
-                chordBuf = _e.sent();
+                _h.trys.push([5, 7, , 8]);
+                return [4 /*yield*/, fs__default['default'].readFile(chordFile)];
+            case 6:
+                chordBuf = _h.sent();
                 chordStr = chordBuf.toString();
                 chord = JSON.parse(chordStr);
-                return [3 /*break*/, 7];
-            case 6:
-                err_1 = _e.sent();
-                console.error("Failed to parse at " + chordFile + ": " + err_1);
                 return [3 /*break*/, 8];
             case 7:
-                if (chords[chord.id]) {
-                    console.log("Ignored duplicated chord id: " + chord.id);
-                }
-                else {
-                    chords[chord.id] = chord;
-                }
-                _e.label = 8;
-            case 8: return [3 /*break*/, 2];
-            case 9: return [3 /*break*/, 16];
-            case 10:
-                e_3_1 = _e.sent();
-                e_3 = { error: e_3_1 };
+                err_1 = _h.sent();
+                console.error("Failed to parse at " + chordFile + ": " + err_1);
                 return [3 /*break*/, 16];
+            case 8:
+                if (!chord.id)
+                    return [3 /*break*/, 16];
+                if (!chords[chord.id]) return [3 /*break*/, 9];
+                console.log("Ignored duplicated chord id: " + chord.id);
+                return [3 /*break*/, 16];
+            case 9:
+                chords[chord.id] = chord;
+                _i = 0, _e = (chord['newServices'] || []);
+                _h.label = 10;
+            case 10:
+                if (!(_i < _e.length)) return [3 /*break*/, 16];
+                serviceConfig = _e[_i];
+                if (!serviceConfig.localDir)
+                    return [3 /*break*/, 15];
+                localDirPath = path__default['default'].join.apply(path__default['default'], __spreadArray$1([absDirPath, 'serviceFiles'], serviceConfig.localDir.path.split('/')));
+                return [4 /*yield*/, canRead(localDirPath)];
             case 11:
-                _e.trys.push([11, , 14, 15]);
-                if (!(_b && !_b.done && (_d = _a.return))) return [3 /*break*/, 13];
-                return [4 /*yield*/, _d.call(_a)];
+                if (!!(_h.sent())) return [3 /*break*/, 15];
+                console.log('trying to make ' + localDirPath);
+                _h.label = 12;
             case 12:
-                _e.sent();
-                _e.label = 13;
-            case 13: return [3 /*break*/, 15];
+                _h.trys.push([12, 14, , 15]);
+                return [4 /*yield*/, fs__default['default'].mkdir(localDirPath, { recursive: true })];
+            case 13:
+                _h.sent();
+                console.log("Created service files directory for " + serviceConfig.name + " at " + localDirPath);
+                return [3 /*break*/, 15];
             case 14:
+                _h.sent();
+                console.error("Failed to create service files directory for " + serviceConfig.name + " at " + localDirPath);
+                return [3 /*break*/, 15];
+            case 15:
+                _i++;
+                return [3 /*break*/, 10];
+            case 16: return [3 /*break*/, 3];
+            case 17: return [3 /*break*/, 24];
+            case 18:
+                e_3_1 = _h.sent();
+                e_3 = { error: e_3_1 };
+                return [3 /*break*/, 24];
+            case 19:
+                _h.trys.push([19, , 22, 23]);
+                if (!(_d && !_d.done && (_g = _c.return))) return [3 /*break*/, 21];
+                return [4 /*yield*/, _g.call(_c)];
+            case 20:
+                _h.sent();
+                _h.label = 21;
+            case 21: return [3 /*break*/, 23];
+            case 22:
                 if (e_3) throw e_3.error;
                 return [7 /*endfinally*/];
-            case 15: return [7 /*endfinally*/];
-            case 16: return [4 /*yield*/, fetchCreds()];
-            case 17:
-                _c = _e.sent(), base = _c[2];
+            case 23: return [7 /*endfinally*/];
+            case 24: return [4 /*yield*/, fetchCreds()];
+            case 25:
+                _f = _h.sent(), base = _f[2];
+                return [4 /*yield*/, publicRoot()];
+            case 26:
+                publicRootPath = _h.sent();
+                restspaceJson = JSON.stringify({ base: base });
+                if (!!publicRootPath) return [3 /*break*/, 27];
+                console.warn('Failed to find public html root - ');
+                console.log("ensure a file will be served from /restspace.json containing: " + restspaceJson);
+                return [3 /*break*/, 29];
+            case 27:
+                restspaceJsonPath = path__default['default'].join(publicRootPath, 'restspace.json');
+                return [4 /*yield*/, fs__default['default'].writeFile(restspaceJsonPath, restspaceJson)];
+            case 28:
+                _h.sent();
+                console.log("Written config file which will be served from /restspace.json at file path " + restspaceJsonPath);
+                _h.label = 29;
+            case 29:
                 services = {
-                    base: base,
                     chords: chords
                 };
-                return [4 /*yield*/, fs__default['default'].writeFile(path__default['default'].join(absDirPath, 'services.json'), JSON.stringify(services))];
-            case 18:
-                _e.sent();
+                servicesJsonPath = path__default['default'].join(absDirPath, 'services.json');
+                return [4 /*yield*/, fs__default['default'].writeFile(servicesJsonPath, JSON.stringify(services))];
+            case 30:
+                _h.sent();
+                console.log("Written service configuration at " + servicesJsonPath);
                 return [2 /*return*/];
         }
     });

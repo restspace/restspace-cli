@@ -12,15 +12,16 @@ export default {
         strict: false,
         banner: '#! /usr/bin/env node\n',
     },
-    plugins: [resolve(), typescript(),json(),
+    plugins: [resolve({ preferBuiltins: true }), typescript(),json(),
               commonjs({include: 'node_modules/**'}),
 			  replace({
-				delimiters: ['', ''],
-				values: {
-				  'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
-				  'require("readable-stream/transform")': 'require("stream").Transform',
-				  'readable-stream': 'stream'
-				}
+          delimiters: ['', ''],
+          values: {
+            'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
+            'require("readable-stream/transform")': 'require("stream").Transform',
+            'readable-stream': 'stream'
+          },
+          preventAssignment: true
 			  })
 			],
     external: [

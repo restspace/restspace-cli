@@ -7,14 +7,16 @@
      "module": "esnext",
      "outDir": "./build",
      "sourceMap": false,
+     "inlineSourceMap": true,
      "strict": true,
      "esModuleInterop": true,
      "moduleResolution": "node"
     },
     "include": [
       "**.ts"
-    ],
+, "resolvePathPattern.test.ts"    ],
     "exclude": [
-      "node_modules"
+      "node_modules",
+      "build"
     ]
 }

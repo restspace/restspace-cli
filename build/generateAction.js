@@ -53,17 +53,27 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
     function reject(value) { resume("throw", value); }
     function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 import fs from "fs/promises";
 import path from "path";
-function scanDir(absPath) {
+import { fetchCreds } from "./fetchCreds";
+import { applicationRoot, canRead, publicRoot } from "./files";
+function scanDir(absPath, mode) {
     return __asyncGenerator(this, arguments, function scanDir_1() {
-        var entries, _i, entries_1, ent, entAbsPath, _a, _b, chord, e_1_1, target, _c, _d, chord, e_2_1;
+        var entries, name, _i, entries_1, ent, entAbsPath, recurse, nextMode, _a, _b, chord, e_1_1, target, _c, _d, chord, e_2_1;
         var e_1, _e, e_2, _f;
         return __generator(this, function (_g) {
             switch (_g.label) {
                 case 0: return [4 /*yield*/, __await(fs.readdir(absPath, { withFileTypes: true }))];
                 case 1:
                     entries = _g.sent();
+                    name = path.parse(absPath).name;
                     _i = 0, entries_1 = entries;
                     _g.label = 2;
                 case 2:
@@ -71,11 +81,17 @@ function scanDir(absPath) {
                     ent = entries_1[_i];
                     entAbsPath = path.join(absPath, ent.name);
                     if (!ent.isDirectory()) return [3 /*break*/, 17];
-                    if (!(ent.name === 'node_modules')) return [3 /*break*/, 16];
+                    recurse = mode !== "project-dir" || ent.name === "node_modules";
+                    if (!recurse) return [3 /*break*/, 16];
+                    nextMode = "project-dir";
+                    if (ent.name === "node_modules")
+                        nextMode = "node_modules";
+                    else if (ent.name.startsWith("@"))
+                        nextMode = "namespace-dir";
                     _g.label = 3;
                 case 3:
                     _g.trys.push([3, 10, 11, 16]);
-                    _a = (e_1 = void 0, __asyncValues(scanDir(entAbsPath)));
+                    _a = (e_1 = void 0, __asyncValues(scanDir(entAbsPath, nextMode)));
                     _g.label = 4;
                 case 4: return [4 /*yield*/, __await(_a.next())];
                 case 5:
@@ -122,7 +138,7 @@ function scanDir(absPath) {
                     _g.label = 23;
                 case 23:
                     _g.trys.push([23, 30, 31, 36]);
-                    _c = (e_2 = void 0, __asyncValues(scanDir(target)));
+                    _c = (e_2 = void 0, __asyncValues(scanDir(target, "project-dir")));
                     _g.label = 24;
                 case 24: return [4 /*yield*/, __await(_c.next())];
                 case 25:
@@ -162,71 +178,125 @@ function scanDir(absPath) {
     });
 }
 export var generateAction = function (dirPath) { return __awaiter(void 0, void 0, void 0, function () {
-    var absDirPath, absPath, chords, _a, _b, chordFile, chord, chordBuf, chordStr, err_1, e_3_1;
-    var e_3, _c;
-    return __generator(this, function (_d) {
-        switch (_d.label) {
+    var absDirPath, _a, _b, absPath, chords, _c, _d, chordFile, chord, chordBuf, chordStr, err_1, _i, _e, serviceConfig, localDirPath, err_2, e_3_1, _f, base, publicRootPath, restspaceJson, restspaceJsonPath, services, servicesJsonPath;
+    var e_3, _g;
+    return __generator(this, function (_h) {
+        switch (_h.label) {
             case 0:
                 if (!dirPath)
                     dirPath = ".";
-                absDirPath = path.resolve(process.cwd(), dirPath);
+                _b = (_a = path).resolve;
+                return [4 /*yield*/, applicationRoot()];
+            case 1:
+                absDirPath = _b.apply(_a, [_h.sent(), dirPath]);
                 absPath = path.resolve(absDirPath, "./node_modules");
                 console.log("Scanning " + absPath + "...");
                 chords = {};
-                _d.label = 1;
-            case 1:
-                _d.trys.push([1, 10, 11, 16]);
-                _a = __asyncValues(scanDir(absPath));
-                _d.label = 2;
-            case 2: return [4 /*yield*/, _a.next()];
-            case 3:
-                if (!(_b = _d.sent(), !_b.done)) return [3 /*break*/, 9];
-                chordFile = _b.value;
+                _h.label = 2;
+            case 2:
+                _h.trys.push([2, 18, 19, 24]);
+                _c = __asyncValues(scanDir(absPath, "node_modules"));
+                _h.label = 3;
+            case 3: return [4 /*yield*/, _c.next()];
+            case 4:
+                if (!(_d = _h.sent(), !_d.done)) return [3 /*break*/, 17];
+                chordFile = _d.value;
                 console.log("Found " + chordFile);
                 chord = { id: 'none' };
-                _d.label = 4;
-            case 4:
-                _d.trys.push([4, 6, , 7]);
-                return [4 /*yield*/, fs.readFile(chordFile)];
+                _h.label = 5;
             case 5:
-                chordBuf = _d.sent();
+                _h.trys.push([5, 7, , 8]);
+                return [4 /*yield*/, fs.readFile(chordFile)];
+            case 6:
+                chordBuf = _h.sent();
                 chordStr = chordBuf.toString();
                 chord = JSON.parse(chordStr);
-                return [3 /*break*/, 7];
-            case 6:
-                err_1 = _d.sent();
-                console.error("Failed to parse at " + chordFile + ": " + err_1);
                 return [3 /*break*/, 8];
             case 7:
-                if (chords[chord.id]) {
-                    console.log("Ignored duplicated chord id: " + chord.id);
-                }
-                else {
-                    chords[chord.id] = chord;
-                }
-                _d.label = 8;
-            case 8: return [3 /*break*/, 2];
-            case 9: return [3 /*break*/, 16];
-            case 10:
-                e_3_1 = _d.sent();
-                e_3 = { error: e_3_1 };
+                err_1 = _h.sent();
+                console.error("Failed to parse at " + chordFile + ": " + err_1);
                 return [3 /*break*/, 16];
+            case 8:
+                if (!chords[chord.id]) return [3 /*break*/, 9];
+                console.log("Ignored duplicated chord id: " + chord.id);
+                return [3 /*break*/, 16];
+            case 9:
+                chords[chord.id] = chord;
+                _i = 0, _e = chord.newServices || [];
+                _h.label = 10;
+            case 10:
+                if (!(_i < _e.length)) return [3 /*break*/, 16];
+                serviceConfig = _e[_i];
+                console.log(serviceConfig);
+                if (!serviceConfig.localDir) return [3 /*break*/, 15];
+                localDirPath = path.join.apply(path, __spreadArrays([absDirPath, 'serviceFiles'], serviceConfig.localDir.path.split('/')));
+                console.log(localDirPath);
+                return [4 /*yield*/, canRead(localDirPath)];
             case 11:
-                _d.trys.push([11, , 14, 15]);
-                if (!(_b && !_b.done && (_c = _a.return))) return [3 /*break*/, 13];
-                return [4 /*yield*/, _c.call(_a)];
+                if (!!(_h.sent())) return [3 /*break*/, 15];
+                _h.label = 12;
             case 12:
-                _d.sent();
-                _d.label = 13;
-            case 13: return [3 /*break*/, 15];
+                _h.trys.push([12, 14, , 15]);
+                console.log('trying to make ' + localDirPath);
+                return [4 /*yield*/, fs.mkdir(localDirPath, { recursive: true })];
+            case 13:
+                _h.sent();
+                console.log("Created service files directory for " + serviceConfig.name + " at " + localDirPath);
+                return [3 /*break*/, 15];
             case 14:
+                err_2 = _h.sent();
+                console.error("Failed to create service files directory for " + serviceConfig.name + " at " + localDirPath + ": " + err_2);
+                return [3 /*break*/, 15];
+            case 15:
+                _i++;
+                return [3 /*break*/, 10];
+            case 16: return [3 /*break*/, 3];
+            case 17: return [3 /*break*/, 24];
+            case 18:
+                e_3_1 = _h.sent();
+                e_3 = { error: e_3_1 };
+                return [3 /*break*/, 24];
+            case 19:
+                _h.trys.push([19, , 22, 23]);
+                if (!(_d && !_d.done && (_g = _c.return))) return [3 /*break*/, 21];
+                return [4 /*yield*/, _g.call(_c)];
+            case 20:
+                _h.sent();
+                _h.label = 21;
+            case 21: return [3 /*break*/, 23];
+            case 22:
                 if (e_3) throw e_3.error;
                 return [7 /*endfinally*/];
-            case 15: return [7 /*endfinally*/];
-            case 16: return [4 /*yield*/, fs.writeFile(path.join(absDirPath, 'services.json'), JSON.stringify(chords))];
-            case 17:
-                _d.sent();
+            case 23: return [7 /*endfinally*/];
+            case 24: return [4 /*yield*/, fetchCreds()];
+            case 25:
+                _f = _h.sent(), base = _f[2];
+                return [4 /*yield*/, publicRoot()];
+            case 26:
+                publicRootPath = _h.sent();
+                restspaceJson = JSON.stringify({ base: base });
+                if (!!publicRootPath) return [3 /*break*/, 27];
+                console.warn('Failed to find public html root');
+                console.log("Ensure a file exists at /restspace.json containing: " + restspaceJson);
+                return [3 /*break*/, 29];
+            case 27:
+                restspaceJsonPath = path.join(publicRootPath, 'restspace.json');
+                return [4 /*yield*/, fs.writeFile(restspaceJsonPath, restspaceJson)];
+            case 28:
+                _h.sent();
+                console.log("Written config file to be read from /restspace.json to " + restspaceJsonPath);
+                _h.label = 29;
+            case 29:
+                services = {
+                    chords: chords
+                };
+                servicesJsonPath = path.join(absDirPath, 'services.json');
+                return [4 /*yield*/, fs.writeFile(servicesJsonPath, JSON.stringify(services))];
+            case 30:
+                _h.sent();
+                console.log("Written service configuration at " + servicesJsonPath);
                 return [2 /*return*/];
         }
     });
 }); };
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2VuZXJhdGVBY3Rpb24uanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9nZW5lcmF0ZUFjdGlvbi50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLE9BQU8sRUFBRSxNQUFNLGFBQWEsQ0FBQztBQUM3QixPQUFPLElBQUksTUFBTSxNQUFNLENBQUM7QUFDeEIsT0FBTyxFQUFFLFVBQVUsRUFBRSxNQUFNLGNBQWMsQ0FBQztBQUMxQyxPQUFPLEVBQUUsZUFBZSxFQUFFLE9BQU8sRUFBRSxVQUFVLEVBQUUsTUFBTSxTQUFTLENBQUM7QUFLL0QsU0FBZ0IsT0FBTyxDQUFDLE9BQWUsRUFBRSxJQUFjOzs7Ozs7d0JBQ3RDLDZCQUFNLEVBQUUsQ0FBQyxPQUFPLENBQUMsT0FBTyxFQUFFLEVBQUUsYUFBYSxFQUFFLElBQUksRUFBRSxDQUFDLEdBQUE7O29CQUE1RCxPQUFPLEdBQUcsU0FBa0Q7b0JBQzFELElBQUksR0FBSyxJQUFJLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxLQUF4QixDQUF5QjswQkFDWixFQUFQLG1CQUFPOzs7eUJBQVAsQ0FBQSxxQkFBTyxDQUFBO29CQUFkLEdBQUc7b0JBQ1AsVUFBVSxHQUFHLElBQUksQ0FBQyxJQUFJLENBQUMsT0FBTyxFQUFFLEdBQUcsQ0FBQyxJQUFJLENBQUMsQ0FBQzt5QkFDNUMsR0FBRyxDQUFDLFdBQVcsRUFBRSxFQUFqQix5QkFBaUI7b0JBQ2QsT0FBTyxHQUFHLElBQUksS0FBSyxhQUFhLElBQUksR0FBRyxDQUFDLElBQUksS0FBSyxjQUFjLENBQUM7eUJBRWxFLE9BQU8sRUFBUCx5QkFBTztvQkFDTixRQUFRLEdBQUcsYUFBeUIsQ0FBQztvQkFDekMsSUFBSSxHQUFHLENBQUMsSUFBSSxLQUFLLGNBQWM7d0JBQUUsUUFBUSxHQUFHLGNBQWMsQ0FBQzt5QkFDdEQsSUFBSSxHQUFH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

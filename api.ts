@@ -1,20 +1,26 @@
 import { exit } from "process";
 import { fetchCreds } from "./fetchCreds";
-import fetch from "node-fetch";
+import fetch, { Response } from "node-fetch";
 
 export const login = async (hostArg?: string): Promise<[ string, string ]> => {
 	const [host, creds, base] = await fetchCreds(hostArg);
 
-	let res = await fetch(base + 'auth/login', {
-		method: 'POST',
-		body: JSON.stringify({
-			email: creds.email,
-			password: creds.password
-		}),
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	});
+	let res: Response;
+	try {
+		res = await fetch(base + 'auth/login', {
+			method: 'POST',
+			body: JSON.stringify({
+				email: creds.email,
+				password: creds.password
+			}),
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+	} catch (err) {
+		console.error(`Login to instance failed: ${err}`);
+		exit(1);
+	}
 
 	if (!res.ok) {
 		switch (res.status) {

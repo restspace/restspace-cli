@@ -1,0 +1,9 @@
+import { pathp } from "./resolvePathPattern";
+import assert from 'assert';
+it('matches a single path el', function () {
+    var res = pathp("a/$>1/b", { currentPath: "/xyz/qqq/abc" });
+    assert.equal(res, 'a/qqq/b');
+    res = pathp("a/$<1/b", { currentPath: "/xyz/qqq/abc/nnn" });
+    assert.equal(res, 'a/abc/b');
+});
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicmVzb2x2ZVBhdGhQYXR0ZXJuLnRlc3QuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9yZXNvbHZlUGF0aFBhdHRlcm4udGVzdC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSxPQUFPLEVBQUUsS0FBSyxFQUFFLE1BQU0sc0JBQXNCLENBQUM7QUFDN0MsT0FBTyxNQUFNLE1BQU0sUUFBUSxDQUFDO0FBRTVCLEVBQUUsQ0FBQywwQkFBMEIsRUFBRTtJQUMzQixJQUFJLEdBQUcsR0FBRyxLQUFLLENBQUMsU0FBUyxFQUFFLEVBQUUsV0FBVyxFQUFFLGNBQWMsRUFBRSxDQUFDLENBQUM7SUFDNUQsTUFBTSxDQUFDLEtBQUssQ0FBQyxHQUFHLEVBQUUsU0FBUyxDQUFDLENBQUM7SUFDN0IsR0FBRyxHQUFHLEtBQUssQ0FBQyxTQUFTLEVBQUUsRUFBQyxXQUFXLEVBQUUsa0JBQWtCLEVBQUUsQ0FBQyxDQUFDO0lBQzNELE1BQU0sQ0FBQyxLQUFLLENBQUMsR0FBRyxFQUFFLFNBQVMsQ0FBQyxDQUFDO0FBQ2pDLENBQUMsQ0FBQyxDQUFDIn0=
