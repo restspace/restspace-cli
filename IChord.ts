@@ -22,3 +22,7 @@ export interface IChord {
     newServices?: IChordServiceConfig[];
 }
 
+export interface IServices {
+    chords: Record<string, IChord>
+}
+

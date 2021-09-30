@@ -24,7 +24,7 @@ export type IChordServiceConfig = PartialBy<IServiceConfig, "access"> & {
 export interface ILocalDir {
 	path: string;
 	pathUrlMap?: string;
-	extensions: string[];
+	extensions?: string[];
 }
 
 export interface IAccessControl {

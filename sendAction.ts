@@ -8,34 +8,64 @@ import { resolvePathPattern } from "./resolvePathPattern";
 import inquirer from "inquirer";
 import { IChord } from "./IChord";
 import { applyTransforms } from "./applyTransforms";
+import { exit } from "process";
 
-const syncLocalDir = async (absDirPath: string, urlBase: string, newService: IChordServiceConfig, headers: Record<string, string>) => {
-	if (!newService.localDir) return;
-	const localDirPath = path.join(absDirPath, 'serviceFiles', ...newService.localDir.path.split('/'));
-	const remoteUrl = `${urlBase}${newService.basePath.substr(1)}`;
 
-	let resp = await fetch(remoteUrl + '/?$list=recursive,all,nodirs');
-	let remoteList = (await resp.json()) as string[];
-	const extensions = newService.localDir.extensions || [];
+
+async function* readdirGenerator(dir: string): AsyncGenerator<string, void, unknown> {
+	const dirents = await fs.readdir(dir, { withFileTypes: true });
+	for (const dirent of dirents) {
+		const res = path.resolve(dir, dirent.name);
+		if (dirent.isDirectory()) {
+			for await (const subres of readdirGenerator(res)) {
+				yield subres;
+			}
+		} else {
+			yield res;
+		}
+	}
+}
+
+async function readdirRecursive(dir: string) {
+	const results = [] as string[];
+	for await (const res of readdirGenerator(dir)) {
+		results.push(res);
+	}
+	return results;
+}
+
+export const syncLocalDir = async (absDirPath: string, urlBase: string, { localDir, basePath }: IChordServiceConfig, headers: Record<string, string>) => {
+	if (!localDir) return;
+	const localDirRoot = localDir.path.startsWith('/') ? '.' : 'serviceFiles';
+	const localDirParts = localDir.path.split('/').filter(p => !!p);
+	const localDirPath = path.join(absDirPath, localDirRoot, ...localDirParts);
+	const remoteUrl = `${urlBase}${basePath.substr(1)}`;
+
+	let resp = await fetch(remoteUrl + '/?$list=recursive,all,nodirs', {
+		headers: { "X-Restspace-Request-Mode": "manage" }
+	});
+	let remoteList = resp.status === 404 ? [] : (await resp.json()) as string[];
+	const extensions = localDir.extensions || [];
 	remoteList = remoteList.filter(name => extensions.length ? extensions.some(ext => name.endsWith(ext)) : true);
-	const localList = await fs.readdir(localDirPath);
+	const localList = await readdirRecursive(localDirPath);
 
 	// update with local files
-	for (const localFile of localList) {
-		const transformedFilename = await applyTransforms(localFile, localDirPath, localList, extensions);
-		if (transformedFilename === '') continue;
+	for await (const localPath of localList) {
+		const transformedPath = await applyTransforms(localPath, localList, extensions);
+		if (transformedPath === '') continue;
 
-		let remoteServicePath = transformedFilename.toLowerCase();
+		let remoteServicePath = transformedPath.substr(localDirPath.length + 1);
+		remoteServicePath = remoteServicePath.replaceAll(path.sep, '/').toLowerCase();
 
-		let remoteUrlPath = `${remoteUrl}/${remoteServicePath}`;
+		let remoteUrlPath = `${remoteUrl}${remoteServicePath}`;
 		try {
-			if (newService.localDir.pathUrlMap) {
-				remoteServicePath = resolvePathPattern(newService.localDir.pathUrlMap, { currentPath: transformedFilename.toLowerCase() });
+			if (localDir.pathUrlMap) {
+				remoteServicePath = resolvePathPattern(localDir.pathUrlMap, { currentPath: remoteServicePath });
 				remoteUrlPath = `${remoteUrl}/${remoteServicePath}`;
 			}
-			const localFilePath = path.join(localDirPath, transformedFilename);
-			const fileStr = await fs.readFile(localFilePath);
-			console.log(`Sending ${localFilePath} to remote url: ${remoteUrlPath}`);
+
+			const fileStr = await fs.readFile(transformedPath);
+			console.log(`Sending ${transformedPath} to remote url: ${remoteUrlPath}`);
 			resp = await fetch(remoteUrlPath, {
 				method: 'PUT',
 				headers,
@@ -67,7 +97,9 @@ const syncLocalDir = async (absDirPath: string, urlBase: string, newService: ICh
 	}
 }
 
-export const sendAction = async () => {
+export const sendAction = () => doSendAction();
+
+export const doSendAction = async (chordId?: string) => {
 	const absDirPath = await applicationRoot();
 
 	const servicesStr = await fs.readFile(path.join(absDirPath, "services.json"));
@@ -82,7 +114,14 @@ export const sendAction = async () => {
 		'Content-Type': 'application/json'
 	} as Record<string, string>;
 
-	const chords = services.chords as Record<string, IChord>;
+	let chords = services.chords as Record<string, IChord>;
+	if (chordId) {
+		if (!chords[chordId]) {
+			console.error(`Failed to find chord with id ${chordId}`);
+			exit(1);
+		}
+		chords = { [chordId]: chords[chordId] };
+	}
 
 	const putChords = await fetch(base + '.well-known/restspace/chords', {
 		method: 'PUT',

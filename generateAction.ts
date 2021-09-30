@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
 import { fetchCreds } from "./fetchCreds";
-import { applicationRoot, canRead, publicRoot } from "./files";
+import { applicationRoot, canRead, publicRoot, updateServicesJson } from "./files";
+import { IChord, IServices } from "./IChord";
 import { IChordServiceConfig, schemaIServiceConfig } from "./IServiceConfig";
 
 type ScanMode = "node_modules" | "project-dir" | "namespace-dir";
@@ -39,10 +40,10 @@ export const generateAction = async (dirPath?: string) => {
 	const absPath = path.resolve(absDirPath, "./node_modules");
 	console.log(`Scanning ${absPath}...`);
 
-	const chords = {} as Record<string, unknown>;
+	const chords = {} as Record<string, IChord>;
 	for await (const chordFile of scanDir(absPath, "node_modules")) {
 		console.log(`Found ${chordFile}`);
-		let chord: Record<string, unknown> & { id: string } = { id: 'none' };
+		let chord: IChord;
 		try {
 			const chordBuf = await fs.readFile(chordFile);
 			const chordStr = chordBuf.toString();
@@ -84,11 +85,10 @@ export const generateAction = async (dirPath?: string) => {
 		await fs.writeFile(restspaceJsonPath, restspaceJson);
 		console.log(`Written config file which will be served from /restspace.json at file path ${restspaceJsonPath}`);
 	}
+
 	const services = {
 		chords
-	};
+	} as IServices;
 
-	const servicesJsonPath = path.join(absDirPath, 'services.json');
-	await fs.writeFile(servicesJsonPath, JSON.stringify(services));
-	console.log(`Written service configuration at ${servicesJsonPath}`);
+	await updateServicesJson(services);
 }
