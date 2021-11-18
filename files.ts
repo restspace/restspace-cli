@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 import fsBase, { access } from "fs";
 import { IChord, IServices } from "./IChord";
 
@@ -34,6 +35,10 @@ export const publicRoot = async () => {
 	if (await canRead(reactStdPublicIndex)) {
 		return path.resolve(appRoot, 'public');
 	}
+	const wwwPublicIndex = path.resolve(appRoot, "www", "index.html");
+	if (await canRead(wwwPublicIndex)) {
+		return path.resolve(appRoot, "www");
+	}
 
 	return '';
 }
@@ -50,6 +55,12 @@ export const buildDir = async () => {
 	if (fType === FileType.Directory) return "/dist";
 
 	return '';
+}
+
+export const getConfigPath = () => {
+	const configDir = path.join(os.homedir(), "restspace");
+	const configPath = path.join(configDir, "config.json");
+	return [ configDir, configPath ];
 }
 
 export const updateServicesJson = async (newServices: IServices) => {

@@ -1,20 +1,10 @@
 import inquirer from "inquirer";
 import path from "path";
-import os from "os";
 import fs from "fs/promises";
 import { exit } from "process";
 import { readConfig } from "./fetchCreds";
-
-export interface Creds {
-	email: string;
-	password: string;
-}
-
-export const getConfigPath = () => {
-	const configDir = path.join(os.homedir(), "restspace");
-	const configPath = path.join(configDir, "config.json");
-	return [ configDir, configPath ];
-}
+import { getConfigPath } from "./files";
+import { Creds } from "./Creds";
 
 export const instanceAction = async (host: string, emailLine: string, passwordLine: string) => {
 	if (host === "list") {

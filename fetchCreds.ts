@@ -1,6 +1,7 @@
-import { Creds, getConfigPath } from "./instanceAction";
 import fs from "fs/promises";
 import { exit } from "process";
+import { Creds } from "./Creds";
+import { getConfigPath } from "./files";
 
 export const readConfig = async () => {
 	const [ configDir, configPath ] = getConfigPath();
